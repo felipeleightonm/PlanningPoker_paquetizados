@@ -288,9 +288,10 @@ function apply(room) {
   const cur = document.querySelector('.screen.active')?.id;
   if (room.phase==='lobby') { renderLobby(room); if(cur!=='s-lobby') goTo('s-lobby'); }
   else if (room.phase==='voting') {
-    renderVoting(room);
-    if (!room.revealed) { if(cur==='s-lobby'||cur==='s-home') goTo('s-voting'); }
-    else { renderResults(room); if(cur!=='s-results') goTo('s-results'); }
+    if (!room.revealed) {
+      renderVoting(room);
+      if(cur!=='s-voting') goTo('s-voting');
+    } else { renderResults(room); if(cur!=='s-results') goTo('s-results'); }
   } else if (room.phase==='ended') { renderSummary(room); if(cur!=='s-summary') goTo('s-summary'); }
 }
 
@@ -434,7 +435,10 @@ window.nextStory = async () => {
   const story=document.getElementById('next-story').value.trim()||'Historia sin título';
   const room=await loadRoom(S.code); if(!room) return;
   Object.assign(room,{phase:'voting',currentStory:story,votes:{},revealed:false});
-  S.myVote=null; await saveRoom(room);
+  S.myVote=null;
+  await saveRoom(room);
+  renderVoting(room);
+  goTo('s-voting');
 };
 
 window.showHistory = async () => {
