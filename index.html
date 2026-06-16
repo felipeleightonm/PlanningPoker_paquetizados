@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Planning Poker · FID Seguros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.8.0/dist/tabler-icons.min.css" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#F5F5F5; --surface:#FFFFFF; --surface2:#FDECEA;
+  --border:rgba(217,31,42,0.12); --border2:rgba(217,31,42,0.28);
+  --text:#1A1A1A; --text2:#555555; --text3:#999999;
+  --purple:#D91F2A; --purple-l:#FDECEA; --purple-m:#E85560; --purple-d:#A8141C;
+  --green:#0F6E56; --green-l:#E1F5EE;
+  --red:#A32D2D; --red-l:#FCEBEB;
+  --amber:#854F0B; --amber-l:#FAEEDA;
+  --r:10px; --r-lg:14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#1A0A0B; --surface:#2A1213; --surface2:#3A1A1B;
+    --border:rgba(217,31,42,0.2); --border2:rgba(217,31,42,0.4);
+    --text:#FFF0F0; --text2:#CC9999; --text3:#885555;
+    --purple:#E85560; --purple-l:#3A1A1B; --purple-m:#F07078; --purple-d:#FFAAAA;
+    --green:#5DCAA5; --green-l:#0A2E24;
+    --red:#F09595; --red-l:#2A1010;
+    --amber:#EF9F27; --amber-l:#2A1E08;
+  }
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;}
+body{display:flex;justify-content:center;}
+#app{width:100%;max-width:460px;padding:1.5rem 1.25rem 4rem;min-height:100vh;}
+.screen{display:none;} .screen.active{display:block;animation:up .18s ease;}
+@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.logo{font-size:21px;font-weight:600;color:var(--text);margin-bottom:.2rem;}
+.logo em{color:var(--purple);font-style:normal;}
+.sub{font-size:13px;color:var(--text2);margin-bottom:2rem;}
+.sec-label{font-size:11px;font-weight:500;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px;}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 18px;font-size:14px;font-weight:500;border-radius:var(--r);border:.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;transition:background .12s,transform .08s;font-family:inherit;white-space:nowrap;}
+.btn:hover{background:var(--surface2);} .btn:active{transform:scale(.98);} .btn:disabled{opacity:.45;pointer-events:none;}
+.btn.p{background:var(--purple);color:#fff;border-color:var(--purple);}
+.btn.p:hover{background:var(--purple-d);border-color:var(--purple-d);}
+.btn.d{background:var(--red);color:#fff;border-color:var(--red);}
+.btn.full{width:100%;justify-content:center;}
+.btn.sm{padding:7px 12px;font-size:13px;}
+.field{margin-bottom:1rem;}
+label{display:block;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:5px;}
+input[type=text]{width:100%;padding:10px 13px;font-size:14px;border:.5px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);outline:none;font-family:inherit;transition:border-color .15s;}
+input[type=text]:focus{border-color:var(--purple);}
+.err{font-size:12px;color:var(--red);margin-top:6px;display:none;}
+.back{background:none;border:none;color:var(--text2);font-size:13px;cursor:pointer;display:flex;align-items:center;gap:4px;margin-bottom:1.5rem;padding:0;font-family:inherit;}
+.back:hover{color:var(--text);}
+.hrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+.pill{font-size:12px;background:var(--surface2);border-radius:20px;padding:4px 11px;color:var(--text2);font-family:'JetBrains Mono',monospace;border:.5px solid var(--border);}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulse 2.2s infinite;}
+.sdot.off{background:var(--red);animation:none;} .sdot.conn{background:var(--amber);}
+.swrap{display:flex;align-items:center;gap:6px;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.bigcode{background:var(--surface2);border-radius:var(--r-lg);padding:1.25rem;text-align:center;margin-bottom:1.5rem;border:.5px solid var(--border);}
+.bigcode .code{font-size:40px;font-weight:600;letter-spacing:.18em;color:var(--purple);font-family:'JetBrains Mono',monospace;}
+.bigcode .hint{font-size:12px;color:var(--text2);margin-top:5px;}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem;}
+.tile{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r-lg);padding:1.25rem;cursor:pointer;transition:border-color .15s,background .12s;}
+.tile:hover{border-color:var(--purple-m);background:var(--surface2);}
+.tile .ti{font-size:22px;color:var(--purple);margin-bottom:9px;}
+.tile .tt{font-size:15px;font-weight:500;color:var(--text);margin-bottom:3px;}
+.tile .td{font-size:12px;color:var(--text2);}
+.plist{display:flex;flex-direction:column;gap:6px;margin-bottom:1.25rem;max-height:240px;overflow-y:auto;}
+.prow{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);}
+.pinfo{display:flex;align-items:center;gap:9px;}
+.av{width:28px;height:28px;border-radius:50%;background:var(--purple-l);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--purple);flex-shrink:0;}
+.pname{font-size:14px;color:var(--text);}
+.badge{font-size:11px;padding:2px 8px;border-radius:20px;}
+.bf{background:var(--purple-l);color:var(--purple);}
+.bv{background:var(--green-l);color:var(--green);}
+.bw{background:var(--surface2);color:var(--text3);}
+.cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:1.5rem;}
+.pc{background:var(--surface);border:1.5px solid var(--border);border-radius:11px;aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .12s,transform .12s,background .12s;font-size:21px;font-weight:600;color:var(--text);user-select:none;}
+.pc:hover{border-color:var(--purple-m);transform:translateY(-4px);}
+.pc.sel{border-color:var(--purple);background:var(--purple-l);color:var(--purple);transform:translateY(-5px);}
+.pc.locked{pointer-events:none;opacity:.5;}
+.alert{display:flex;align-items:flex-start;gap:8px;padding:10px 13px;border-radius:var(--r);font-size:13px;margin-bottom:1rem;line-height:1.5;}
+.as{background:var(--green-l);color:var(--green);}
+.ai{background:var(--purple-l);color:var(--purple-d);}
+.aw{background:var(--amber-l);color:var(--amber);}
+.ae{background:var(--red-l);color:var(--red);}
+.sbox{background:var(--surface2);padding:1rem 1.25rem;margin-bottom:1.25rem;border-left:3px solid var(--purple);border-radius:0 var(--r) var(--r) 0;}
+.sbox .stitle{font-size:15px;font-weight:500;color:var(--text);margin-bottom:3px;}
+.sbox .ssub{font-size:12px;color:var(--text2);}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem;}
+.met{background:var(--surface2);border-radius:var(--r);padding:.85rem;text-align:center;}
+.met.acc{background:var(--purple-l);}
+.ml{font-size:11px;color:var(--text2);margin-bottom:4px;}
+.met.acc .ml{color:var(--purple);}
+.mv{font-size:26px;font-weight:600;color:var(--text);}
+.met.acc .mv{color:var(--purple);}
+.cbar{height:5px;background:var(--surface2);border-radius:3px;margin-bottom:1.25rem;overflow:hidden;}
+.cfill{height:100%;border-radius:3px;background:var(--green);transition:width .6s cubic-bezier(.4,0,.2,1);}
+.rcards{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1.25rem;}
+.rc{display:flex;flex-direction:column;align-items:center;gap:5px;}
+.rcf{width:46px;height:64px;border-radius:9px;border:.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:600;color:var(--text);background:var(--surface);}
+.rcf.win{background:var(--purple-l);border-color:var(--purple);color:var(--purple);}
+.rcn{font-size:11px;color:var(--text2);max-width:46px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hrow2{display:flex;align-items:center;padding:9px 12px;background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);margin-bottom:6px;gap:8px;}
+.hs{font-size:13px;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ha{font-size:12px;color:var(--text2);white-space:nowrap;}
+.hv{font-size:14px;font-weight:600;color:var(--purple);background:var(--purple-l);padding:3px 11px;border-radius:7px;white-space:nowrap;}
+.divider{border:none;border-top:.5px solid var(--border);margin:1.25rem 0;}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;}
+.spin.dk{border-color:var(--border2);border-top-color:var(--purple);}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cfg-banner{background:var(--amber-l);border:.5px solid var(--amber);border-radius:var(--r);padding:12px 14px;font-size:13px;color:var(--amber);margin-bottom:1.5rem;line-height:1.6;}
+.cfg-banner a{color:var(--amber);font-weight:500;}
+.codeblock{background:var(--surface2);border:.5px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);margin-top:8px;white-space:pre;overflow-x:auto;line-height:1.7;}
+@media(max-width:420px){#app{padding:1rem 1rem 2.5rem;}.cgrid{gap:6px;}.pc{font-size:18px;}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="s-home" class="screen active">
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:.2rem"><img src="data:image/png;base64,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" alt="FID Seguros" style="height:38px;flex-shrink:0" /><div class="logo" style="margin-bottom:0">Planning <em>Poker</em></div></div>
+  <p class="sub">Paquetizados</p>
+  <div id="cfg-warn" class="cfg-banner" style="display:none">
+    <strong>⚙️ Falta configurar Supabase</strong><br>
+    Busca en el código la línea <code style="font-family:monospace">SUPABASE_PUBLISHABLE_KEY</code> y pega tu clave <code style="font-family:monospace">sb_publishable_...</code>.<br>
+    La URL se extrae automáticamente de la clave — no necesitas pegarla por separado.
+  </div>
+  <div class="tiles">
+    <div class="tile" onclick="goTo('s-create')">
+      <div class="ti"><i class="ti ti-layout-dashboard" aria-hidden="true"></i></div>
+      <div class="tt">Crear sala</div>
+      <div class="td">Soy el facilitador</div>
+    </div>
+    <div class="tile" onclick="goTo('s-join')">
+      <div class="ti"><i class="ti ti-door-enter" aria-hidden="true"></i></div>
+      <div class="tt">Unirse</div>
+      <div class="td">Tengo un código</div>
+    </div>
+  </div>
+  <div style="font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px">
+    <i class="ti ti-bolt" aria-hidden="true" style="color:var(--purple-m)"></i>
+    Fibonacci · Sin cuenta para participantes
+  </div>
+</div>
+
+<div id="s-create" class="screen">
+  <button class="back" onclick="goTo('s-home')"><i class="ti ti-arrow-left" aria-hidden="true"></i> Volver</button>
+  <div class="logo">Crear sala</div>
+  <p class="sub">Configura tu sesión de planning</p>
+  <div class="field">
+    <label for="c-name">Tu nombre (facilitador)</label>
+    <input type="text" id="c-name" placeholder="Ej: Felipe" autocomplete="off" />
+  </div>
+  <div class="field">
+    <label for="c-session">Nombre de la sesión</label>
+    <input type="text" id="c-session" placeholder="Ej: Sprint 12 – Planning" autocomplete="off" />
+  </div>
+  <button class="btn p full" id="create-btn" onclick="createRoom()">
+    <i class="ti ti-check" aria-hidden="true"></i> Crear sala
+  </button>
+  <div class="err" id="create-err"></div>
+</div>
+
+<div id="s-join" class="screen">
+  <button class="back" onclick="goTo('s-home')"><i class="ti ti-arrow-left" aria-hidden="true"></i> Volver</button>
+  <div class="logo">Unirse a sala</div>
+  <p class="sub">Ingresa el código que te compartió el facilitador</p>
+  <div class="field">
+    <label for="j-name">Tu nombre</label>
+    <input type="text" id="j-name" placeholder="Ej: Ana" autocomplete="off" />
+  </div>
+  <div class="field">
+    <label for="j-code">Código de sala</label>
+    <input type="text" id="j-code" placeholder="XK49" maxlength="4"
+      style="text-transform:uppercase;letter-spacing:.2em;font-family:'JetBrains Mono',monospace;font-size:22px;text-align:center"
+      oninput="this.value=this.value.toUpperCase()" autocomplete="off" />
+  </div>
+  <button class="btn p full" id="join-btn" onclick="joinRoom()">
+    <i class="ti ti-door-enter" aria-hidden="true"></i> Unirme
+  </button>
+  <div class="err" id="join-err"></div>
+</div>
+
+<div id="s-lobby" class="screen">
+  <div class="hrow">
+    <div class="logo">Sala lista</div>
+    <div class="swrap"><span class="sdot conn" id="d-lobby"></span><span class="pill" id="pill-lobby"></span></div>
+  </div>
+  <div id="lobby-code"></div>
+  <div class="sec-label">Participantes (<span id="lobby-count">0</span>)</div>
+  <div class="plist" id="lobby-plist"></div>
+  <div id="lobby-ctrl"></div>
+</div>
+
+<div id="s-voting" class="screen">
+  <div class="hrow">
+    <div class="logo">Votando</div>
+    <div class="swrap"><span class="sdot" id="d-voting"></span><span class="pill" id="pill-voting"></span></div>
+  </div>
+  <div class="sbox">
+    <div class="stitle" id="v-story"></div>
+    <div class="ssub">Selecciona tu estimación · reveal simultáneo</div>
+  </div>
+  <div class="cgrid" id="v-cards"></div>
+  <div class="sec-label">Estado del equipo</div>
+  <div class="plist" id="v-plist"></div>
+  <div id="v-actions"></div>
+</div>
+
+<div id="s-results" class="screen">
+  <div class="hrow">
+    <div class="logo">Resultados</div>
+    <span class="pill" id="pill-results"></span>
+  </div>
+  <div class="sbox"><div class="stitle" id="r-story"></div></div>
+  <div id="r-metrics"></div>
+  <div class="sec-label">Votos individuales</div>
+  <div class="rcards" id="r-cards"></div>
+  <hr class="divider" />
+  <div id="r-actions"></div>
+</div>
+
+<div id="s-summary" class="screen">
+  <div class="logo">Sesión finalizada</div>
+  <p class="sub" id="sum-sub"></p>
+  <div id="sum-body"></div>
+  <button class="btn p full" style="margin-top:1.25rem" onclick="resetAll()">
+    <i class="ti ti-refresh" aria-hidden="true"></i> Nueva sesión
+  </button>
+</div>
+
+</div>
+
+<script type="module">
+const SUPABASE_URL = 'https://cvoifufgoxcpxalkdyta.supabase.co';
+// ⚙️ Pega aquí tu publishable key (sb_publishable_...)
+const SUPABASE_KEY = 'TU_KEY_AQUI';
+
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const FIBO = [1,2,3,5,8,13,21,'?'];
+let sb, channel;
+let S = { name:'', code:'', isFacilitator:false, myVote:null, sessionName:'' };
+
+function init() {
+  sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
+window.goTo = id => {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+};
+const ini = n => n.trim().split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+const gen = () => Math.random().toString(36).substring(2,6).toUpperCase();
+const dot = (id,st) => { const d=document.getElementById(id); if(d) d.className='sdot'+(st==='on'?'':st==='conn'?' conn':' off'); };
+const showErr = (id,msg) => { const e=document.getElementById(id); e.textContent=msg; e.style.display='block'; setTimeout(()=>e.style.display='none',5000); };
+
+async function saveRoom(state) {
+  return sb.from('rooms').upsert({ code:state.code, state, updated_at:new Date().toISOString() }, { onConflict:'code' });
+}
+async function loadRoom(code) {
+  const { data } = await sb.from('rooms').select('state').eq('code',code).single();
+  return data?.state || null;
+}
+function newState(code, sessionName, facilitator) {
+  return { code, sessionName, facilitator, phase:'lobby', currentStory:'',
+    participants:{ [facilitator]:{ name:facilitator, role:'facilitator' } },
+    votes:{}, revealed:false, history:[] };
+}
+
+function subscribe(code) {
+  if (channel) sb.removeChannel(channel);
+  channel = sb.channel('room:'+code)
+    .on('postgres_changes', { event:'*', schema:'public', table:'rooms', filter:`code=eq.${code}` },
+      p => { if (p.new?.state) apply(p.new.state); })
+    .subscribe(st => {
+      dot('d-lobby', st==='SUBSCRIBED'?'on':'conn');
+      dot('d-voting', st==='SUBSCRIBED'?'on':'conn');
+    });
+}
+
+function apply(room) {
+  dot('d-lobby','on'); dot('d-voting','on');
+  const cur = document.querySelector('.screen.active')?.id;
+  if (room.phase==='lobby') { renderLobby(room); if(cur!=='s-lobby') goTo('s-lobby'); }
+  else if (room.phase==='voting') {
+    renderVoting(room);
+    if (!room.revealed) { if(cur==='s-lobby'||cur==='s-home') goTo('s-voting'); }
+    else { renderResults(room); if(cur!=='s-results') goTo('s-results'); }
+  } else if (room.phase==='ended') { renderSummary(room); if(cur!=='s-summary') goTo('s-summary'); }
+}
+
+window.createRoom = async () => {
+  const name = document.getElementById('c-name').value.trim();
+  const session = document.getElementById('c-session').value.trim() || 'Planning Session';
+  if (!name) { document.getElementById('c-name').focus(); return; }
+  const btn = document.getElementById('create-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Creando...';
+  const code = gen();
+  const state = newState(code, session, name);
+  const { error } = await saveRoom(state);
+  btn.disabled=false; btn.innerHTML='<i class="ti ti-check"></i> Crear sala';
+  if (error) { showErr('create-err','Error al crear la sala: '+error.message); return; }
+  S.name=name; S.code=code; S.sessionName=session; S.isFacilitator=true; S.myVote=null;
+  subscribe(code); renderLobby(state); goTo('s-lobby');
+};
+
+window.joinRoom = async () => {
+  const name = document.getElementById('j-name').value.trim();
+  const code = document.getElementById('j-code').value.trim().toUpperCase();
+  if (!name) { document.getElementById('j-name').focus(); return; }
+  if (code.length!==4) { document.getElementById('j-code').focus(); return; }
+  const btn = document.getElementById('join-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spin dk"></span> Buscando...';
+  const room = await loadRoom(code);
+  btn.disabled=false; btn.innerHTML='<i class="ti ti-door-enter"></i> Unirme';
+  if (!room) { showErr('join-err','Sala no encontrada. Verifica el código.'); return; }
+  room.participants[name] = { name, role:'participant' };
+  await saveRoom(room);
+  S.name=name; S.code=code; S.sessionName=room.sessionName; S.isFacilitator=false; S.myVote=null;
+  subscribe(code); apply(room);
+};
+
+function renderLobby(room) {
+  document.getElementById('pill-lobby').textContent=room.code;
+  const parts=Object.values(room.participants||{});
+  document.getElementById('lobby-count').textContent=parts.length;
+  document.getElementById('lobby-code').innerHTML=S.isFacilitator
+    ?`<div class="bigcode"><div class="code">${room.code}</div><div class="hint">Comparte este código con tu equipo</div></div>`:'' ;
+  document.getElementById('lobby-plist').innerHTML=parts.map(p=>`
+    <div class="prow"><div class="pinfo">
+      <div class="av">${ini(p.name)}</div><span class="pname">${p.name}</span>
+      ${p.role==='facilitator'?'<span class="badge bf">Facilitador</span>':''}
+    </div></div>`).join('');
+  document.getElementById('lobby-ctrl').innerHTML=S.isFacilitator
+    ?`<div class="field" style="margin-top:.5rem">
+        <label for="first-story">Primera historia a estimar</label>
+        <input type="text" id="first-story" placeholder="Ej: HU-001 – Login con SSO" autocomplete="off"/>
+       </div>
+       <button class="btn p full" onclick="startVoting()"><i class="ti ti-player-play"></i> Iniciar votación</button>`
+    :`<div class="alert ai"><i class="ti ti-clock"></i> Esperando que el facilitador inicie la votación…</div>`;
+}
+
+window.startVoting = async () => {
+  const story=document.getElementById('first-story').value.trim()||'Historia sin título';
+  const room=await loadRoom(S.code); if(!room) return;
+  Object.assign(room,{phase:'voting',currentStory:story,votes:{},revealed:false});
+  S.myVote=null; await saveRoom(room);
+};
+
+function renderVoting(room) {
+  document.getElementById('pill-voting').textContent=room.code;
+  document.getElementById('v-story').textContent=room.currentStory;
+  const parts=Object.values(room.participants||{});
+  const votes=room.votes||{};
+  const voted=!!votes[S.name];
+  document.getElementById('v-cards').innerHTML=FIBO.map(v=>
+    `<div class="pc${S.myVote==v?' sel':''}${voted&&S.myVote!=v?' locked':''}" onclick="castVote('${v}')">${v}</div>`).join('');
+  document.getElementById('v-plist').innerHTML=parts.map(p=>`
+    <div class="prow"><div class="pinfo">
+      <div class="av">${ini(p.name)}</div><span class="pname">${p.name}</span>
+      ${p.role==='facilitator'?'<span class="badge bf">Facilitador</span>':''}
+    </div><span class="badge ${votes[p.name]?'bv':'bw'}">${votes[p.name]?'Votó':'Esperando'}</span></div>`).join('');
+  const voteCount=Object.keys(votes).length;
+  const voters=parts.filter(p=>p.role!=='facilitator').length;
+  const actEl=document.getElementById('v-actions');
+  if(S.isFacilitator){
+    actEl.innerHTML=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:.5rem">
+      <button class="btn p" onclick="revealVotes()"><i class="ti ti-eye"></i> Revelar votos</button>
+      <span style="font-size:12px;color:var(--text2)">${voteCount} de ${voters} votaron</span></div>`;
+  } else if(voted){
+    actEl.innerHTML=`<div class="alert as"><i class="ti ti-check"></i> Voto registrado. Esperando al facilitador.</div>`;
+  } else {
+    actEl.innerHTML=`<p style="font-size:13px;color:var(--text2);margin-top:.5rem">Selecciona una carta para votar.</p>`;
+  }
+}
+
+window.castVote = async val => {
+  if(S.myVote) return; S.myVote=val;
+  const room=await loadRoom(S.code); if(!room||room.phase!=='voting') return;
+  room.votes[S.name]=val; await saveRoom(room);
+};
+
+window.revealVotes = async () => {
+  const room=await loadRoom(S.code); if(!room) return;
+  room.revealed=true; await saveRoom(room);
+};
+
+function renderResults(room) {
+  document.getElementById('pill-results').textContent=room.code;
+  document.getElementById('r-story').textContent=room.currentStory;
+  const votes=room.votes||{};
+  const nums=Object.entries(votes).filter(([,v])=>v!=='?').map(([n,v])=>({name:n,val:Number(v)}));
+  const avg=nums.length?nums.reduce((a,b)=>a+b.val,0)/nums.length:0;
+  const nearest=nums.length?FIBO.filter(v=>v!=='?').reduce((a,b)=>Math.abs(b-avg)<Math.abs(a-avg)?b:a):'—';
+  const pct=consensus(nums.map(v=>v.val));
+  document.getElementById('r-metrics').innerHTML=`
+    <div class="mgrid">
+      <div class="met"><div class="ml">Promedio</div><div class="mv">${avg.toFixed(1)}</div></div>
+      <div class="met acc"><div class="ml">Sugerido</div><div class="mv">${nearest}</div></div>
+      <div class="met"><div class="ml">Consenso</div><div class="mv">${Math.round(pct)}%</div></div>
+    </div>
+    <div class="cbar"><div class="cfill" style="width:${pct}%"></div></div>`;
+  document.getElementById('r-cards').innerHTML=Object.entries(votes).map(([n,v])=>
+    `<div class="rc"><div class="rcf${v==nearest?' win':''}">${v}</div><div class="rcn">${n}</div></div>`).join('');
+  if(!room.history) room.history=[];
+  if(!room.history.find(h=>h.story===room.currentStory)){
+    room.history.push({story:room.currentStory,vote:nearest,avg:avg.toFixed(1)});
+    saveRoom(room);
+  }
+  document.getElementById('r-actions').innerHTML=S.isFacilitator
+    ?`<div class="field"><label for="next-story">Siguiente historia</label>
+       <input type="text" id="next-story" placeholder="Ej: HU-002 – Dashboard principal" autocomplete="off"/></div>
+       <div style="display:flex;gap:8px;flex-wrap:wrap">
+         <button class="btn p" onclick="nextStory()"><i class="ti ti-arrow-right"></i> Nueva historia</button>
+         <button class="btn" onclick="showHistory()"><i class="ti ti-history"></i> Historial</button>
+         <button class="btn d" onclick="endSession()"><i class="ti ti-flag"></i> Terminar</button>
+       </div>`
+    :`<div class="alert ai"><i class="ti ti-clock"></i> Esperando que el facilitador inicie la siguiente historia.</div>`;
+}
+
+function consensus(vals) {
+  if(!vals.length) return 0;
+  const s=[...vals].sort((a,b)=>a-b);
+  const mode=s[Math.floor(s.length/2)];
+  return Math.round(vals.filter(v=>v===mode).length/vals.length*100);
+}
+
+window.nextStory = async () => {
+  const story=document.getElementById('next-story').value.trim()||'Historia sin título';
+  const room=await loadRoom(S.code); if(!room) return;
+  Object.assign(room,{phase:'voting',currentStory:story,votes:{},revealed:false});
+  S.myVote=null; await saveRoom(room);
+};
+
+window.showHistory = async () => {
+  const room=await loadRoom(S.code);
+  const hist=room?.history||[];
+  document.getElementById('r-actions').innerHTML=`
+    <div class="sec-label" style="margin-bottom:8px">Historial de la sesión</div>
+    ${hist.length?hist.map(h=>`<div class="hrow2"><span class="hs">${h.story}</span><span class="ha">avg ${h.avg}</span><span class="hv">${h.vote}</span></div>`).join('')
+      :'<p style="font-size:13px;color:var(--text2)">Sin historias aún.</p>'}
+    <button class="btn sm" style="margin-top:10px" onclick="backToResults()"><i class="ti ti-arrow-left"></i> Volver</button>`;
+};
+
+window.backToResults = async () => { const r=await loadRoom(S.code); if(r) renderResults(r); };
+
+window.endSession = async () => {
+  const room=await loadRoom(S.code); if(!room) return;
+  room.phase='ended'; await saveRoom(room);
+};
+
+function renderSummary(room) {
+  document.getElementById('sum-sub').textContent=room.sessionName||'Planning Session';
+  const hist=room.history||[];
+  document.getElementById('sum-body').innerHTML=`
+    <div class="alert as" style="margin-bottom:1rem"><i class="ti ti-check"></i> ${hist.length} histori${hist.length===1?'a estimada':'as estimadas'}</div>
+    <div class="sec-label" style="margin-bottom:8px">Resumen final</div>
+    ${hist.length?hist.map(h=>`<div class="hrow2"><span class="hs">${h.story}</span><span class="ha">avg ${h.avg}</span><span class="hv">${h.vote}</span></div>`).join('')
+      :'<p style="font-size:13px;color:var(--text2)">Sin historias estimadas.</p>'}`;
+}
+
+window.resetAll = () => {
+  if(channel) sb.removeChannel(channel);
+  S={name:'',code:'',isFacilitator:false,myVote:null,sessionName:''};
+  ['c-name','c-session','j-name','j-code'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  goTo('s-home');
+};
+
+init();
+</script>
+</body>
+</html>
