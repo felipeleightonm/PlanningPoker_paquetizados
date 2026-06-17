@@ -236,9 +236,8 @@ input[type=text]:focus{border-color:var(--purple);}
 </div>
 
 <script type="module">
-const SUPABASE_URL = 'https://cvoifufgoxcpxalkdyta.supabase.co';
-// ⚙️ Pega aquí tu publishable key (sb_publishable_...)
-const SUPABASE_KEY = 'sb_publishable_8UVz9crLmla5wYEgEQ2bZg_h732fd90';
+// Credenciales cargadas desde config.js
+const { SUPABASE_URL, SUPABASE_KEY } = await import('./config.js');
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
@@ -289,6 +288,9 @@ function apply(room) {
   if (room.phase==='lobby') { renderLobby(room); if(cur!=='s-lobby') goTo('s-lobby'); }
   else if (room.phase==='voting') {
     if (!room.revealed) {
+      // Reset myVote if participant hasn't voted in this round
+      const votes = room.votes || {};
+      if (!votes[S.name]) S.myVote = null;
       renderVoting(room);
       if(cur!=='s-voting') goTo('s-voting');
     } else { renderResults(room); if(cur!=='s-results') goTo('s-results'); }
