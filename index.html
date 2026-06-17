@@ -417,7 +417,7 @@ function renderResults(room) {
     ?`<div class="field"><label for="next-story">Siguiente historia</label>
        <input type="text" id="next-story" placeholder="Ej: HU-002 – Dashboard principal" autocomplete="off"/></div>
        <div style="display:flex;gap:8px;flex-wrap:wrap">
-         <button class="btn p" onclick="nextStory()"><i class="ti ti-arrow-right"></i> Nueva historia</button>
+         <button class="btn p" onclick="nextStory(document.getElementById('next-story').value)"><i class="ti ti-arrow-right"></i> Nueva historia</button>
          <button class="btn" onclick="showHistory()"><i class="ti ti-history"></i> Historial</button>
          <button class="btn d" onclick="endSession()"><i class="ti ti-flag"></i> Terminar</button>
        </div>`
@@ -431,8 +431,8 @@ function consensus(vals) {
   return Math.round(vals.filter(v=>v===mode).length/vals.length*100);
 }
 
-window.nextStory = async () => {
-  const story=document.getElementById('next-story').value.trim()||'Historia sin título';
+window.nextStory = async (val) => {
+  const story=(val||'').trim()||'Historia sin título';
   const room=await loadRoom(S.code); if(!room) return;
   Object.assign(room,{phase:'voting',currentStory:story,votes:{},revealed:false});
   S.myVote=null;
